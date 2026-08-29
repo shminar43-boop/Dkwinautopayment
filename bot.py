@@ -1,27 +1,50 @@
 import logging
 import asyncio
+import json
+import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ChatAction
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler, MessageHandler, filters
 
 # ==================== কনফিগারেশন ====================
 BOT_TOKEN = "8887502071:AAE20aePqQgR8FdQ8HqgNH2RHfXaY7SM0Ho"
-ADMIN_ID = 6776006196
-PAYMENT_NUMBER = "01870156643"  # bKash / Nagad Number
-SUPPORT_USERNAME = "Minaradmin"  # Support Username
+ADMIN_ID = 6776006196  # আপনার অ্যাডমিন আইডি
+PAYMENT_NUMBER = "01870156643"  # বিকাশ / নগদ নম্বর
+SUPPORT_USERNAME = "Minaradmin"  # সাপোর্ট ইউজারনেম
 
-# প্রিমিয়াম অ্যানিমেটেড জিআইএফ ব্যানার লিংক (পেমেন্ট ও ভেরিফিকেশন থিম)
+# অ্যানিমেটেড ব্যানার লিংক
 ANIMATED_BANNER_URL = "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3h2aTNld2N5OHAzcnRsbWVhdjFwdmdwNDNldzZ3d2R6bWZ4czE3biZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oKIPnAiaMCws8nOsE/giphy.gif"
+USER_DB_FILE = "users.json"
 # ====================================================
 
-# /start কমান্ড হ্যান্ডলার (অ্যানিমেশন সহ)
+# ইউজার আইডি সেভ করার ফাংশন
+def load_users():
+    if os.path.exists(USER_DB_FILE):
+        try:
+            with open(USER_DB_FILE, "r") as f:
+                return set(json.load(f))
+        except Exception:
+            return set()
+    return set()
+
+def save_user(user_id):
+    users = load_users()
+    if user_id not in users:
+        users.add(user_id)
+        with open(USER_DB_FILE, "w") as f:
+            json.dump(list(users), f)
+
+# /start কমান্ড হ্যান্ডলার
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     chat_id = update.effective_chat.id
+    
+    # ইউজার আইডি সংরক্ষণ
+    save_user(user.id)
 
     # টাইপিং অ্যানিমেশন এফেক্ট
     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-    await asyncio.sleep(0.5)
+    await asyncio.sleep(0.4)
     
     msg = (
         f"✨ **— OFFICIAL VIP PAYMENT PORTAL —** ✨\n"
@@ -41,7 +64,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
     ]
     
-    # অ্যানিমেটেড ব্যানার পাঠাবে
     try:
         await update.message.reply_animation(
             animation=ANIMATED_BANNER_URL,
@@ -56,7 +78,95 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown"
         )
 
-# বাটন ক্লিক হ্যান্ডলার (স্মুথ এডিটিং ও লোডিং অ্যানিমেশন সহ)
+# অ্যাডমিন প্যানেল কমান্ড (/admin)
+async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if user_id != ADMIN_ID:
+        await update.message.reply_text("⛔ এই কমান্ডটি কেবল অ্যাডমিন ব্যবহার করতে পারবেন।")
+        return
+
+    users = load_users()
+    msg = (
+        f"👑 **— ADMIN CONTROL PANEL —**\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"📊 **মোট রেজিস্টার্ড কাস্টমার:** `{len(users)}` জন\n"
+        f"⚡ **বট স্ট্যাটাস:** 🟢 Online & Running\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"📢 **সব ইউজারকে মেসেজ পাঠাতে ব্যবহার করুন:**\n"
+        f"`/broadcast আপনার নোটিশের লেখা`\n\n"
+        f"💡 *উদাহরণ:* `/broadcast আজ আমাদের অফার চলছে!`"
+    )
+    
+    keyboard = [
+        [InlineKeyboardButton("📊 Total Users Stats", callback_data="admin_stats")],
+        [InlineKeyboardButton("🔄 Refresh Admin Panel", callback_data="admin_refresh")]
+    ]
+    
+    await update.message.reply_text(msg, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+
+# ব্রডকাস্ট কমান্ড (/broadcast <মেসেজ>)
+async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if user_id != ADMIN_ID:
+        await update.message.reply_text("⛔ এই কমান্ডটি কেবল অ্যাডমিন ব্যবহার করতে পারবেন।")
+        return
+
+    if not context.args and not update.message.reply_to_message:
+        await update.message.reply_text(
+            "⚠️ **মেসেজ লিখুন!**\n\n"
+            "ব্যবহারের নিয়ম:\n"
+            "`/broadcast আপনার মেসেজের লেখা`\n\n"
+            "অথবা কোনো মেসেজে Reply করে `/broadcast` লিখুন।",
+            parse_mode="Markdown"
+        )
+        return
+
+    users = load_users()
+    if not users:
+        await update.message.reply_text("❌ কোনো ইউজার পাওয়া যায়নি।")
+        return
+
+    # রিপ্লাই করা মেসেজ নাকি টেক্সট মেসেজ তা চেক করা
+    broadcast_text = " ".join(context.args) if context.args else None
+    reply_to_msg = update.message.reply_to_message
+
+    status_msg = await update.message.reply_text(f"⏳ **{len(users)} জন ইউজারের কাছে মেসেজ পাঠানো শুরু হচ্ছে...**", parse_mode="Markdown")
+    
+    success_count = 0
+    failed_count = 0
+
+    for uid in users:
+        try:
+            if reply_to_msg:
+                await reply_to_msg.copy(chat_id=uid)
+            else:
+                await context.bot.send_message(
+                    chat_id=uid,
+                    text=f"📢 **— ANNOUNCEMENT —**\n━━━━━━━━━━━━━━━━━━━━━━━\n\n{broadcast_text}",
+                    parse_mode="Markdown"
+                )
+            success_count += 1
+            await asyncio.sleep(0.05)  # Telegram API Limit এড়াতে ছোট বিরতি
+        except Exception:
+            failed_count += 1
+
+    await status_msg.edit_text(
+        f"✅ **BROADCAST COMPLETED!**\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🟢 **সফলভাবে পাঠানো হয়েছে:** `{success_count}` জন\n"
+        f"🔴 **ব্যর্থ (বট ব্লক করেছে):** `{failed_count}` জন\n"
+        f"📊 **মোট কাস্টমার:** `{len(users)}` জন",
+        parse_mode="Markdown"
+    )
+
+# ইউজার সংখ্যা দেখার কমান্ড (/stats)
+async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != ADMIN_ID:
+        return
+    users = load_users()
+    await update.message.reply_text(f"📊 **মোট কাস্টমার সংখ্যা:** `{len(users)}` জন", parse_mode="Markdown")
+
+# বাটন ক্লিক হ্যান্ডলার
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -64,7 +174,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query.data == "req_pay":
         context.user_data['waiting_for_trx'] = True
         
-        # ১. লাইভ লোডিং অ্যানিমেশন ট্রানজিশন
         loading_frames = [
             "⏳ *পেমেন্ট পোর্টাল লোড হচ্ছে...*\n`[▒▒▒▒▒▒▒▒▒▒] 0%`",
             "⚡ *পেমেন্ট নির্দেশিকা তৈরি হচ্ছে...*\n`[█████▒▒▒▒▒] 50%`",
@@ -74,7 +183,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for frame in loading_frames:
             try:
                 await query.edit_message_caption(caption=frame, parse_mode="Markdown")
-                await asyncio.sleep(0.2)
+                await asyncio.sleep(0.15)
             except Exception:
                 pass
         
@@ -116,13 +225,17 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_caption(caption=msg, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
 
     elif query.data == "refresh":
-        # রিফ্রেশ বাটনে অ্যানিমেটেড টোস্ট নোটিফিকেশন
         await query.answer("✨ পোর্টাল তথ্য রিয়েল-টাইমে আপডেট করা হয়েছে!", show_alert=True)
+
+    elif query.data == "admin_stats":
+        users = load_users()
+        await query.answer(f"📊 মোট ইউজার: {len(users)} জন", show_alert=True)
+
+    elif query.data == "admin_refresh":
+        await query.answer("অ্যাডমিন ড্যাশবোর্ড আপডেট করা হয়েছে!", show_alert=True)
 
     elif query.data.startswith("approve_"):
         user_id = int(query.data.split("_")[1])
-        
-        # ইউজারকে প্রিমিয়াম অ্যানিমেটেড নোটিফিকেশন পাঠানো
         await context.bot.send_message(
             chat_id=user_id, 
             text=(
@@ -149,21 +262,21 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         await query.edit_message_text(f"❌ Payment Rejected for User ID: {user_id}")
 
-# ইউজারের ট্রানজেকশন তথ্য সাবমিট করা (অ্যানিমেটেড প্রসেস)
+# ইউজারের ট্রানজেকশন তথ্য সাবমিট করা
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     text = update.message.text
     chat_id = update.effective_chat.id
+    
+    save_user(user.id)
 
     if context.user_data.get('waiting_for_trx'):
         context.user_data['waiting_for_trx'] = False
         
-        # প্রসেসিং মেসেজ ও টাইপিং অ্যাকশন
         await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         status_msg = await update.message.reply_text("⏳ *ভেরিফিকেশনের জন্য সার্ভারে ডেটা প্রসেস হচ্ছে...*", parse_mode="Markdown")
-        await asyncio.sleep(1.2)
+        await asyncio.sleep(1.0)
         
-        # অ্যাডমিনের কাছে অ্যালার্ট পাঠানো
         admin_keyboard = [
             [
                 InlineKeyboardButton("✅ Confirm Payment", callback_data=f"approve_{user.id}"),
@@ -185,7 +298,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown"
         )
         
-        # কনফার্মেশন অ্যানিমেটেড মেসেজ
         await status_msg.edit_text(
             "🚀 **আপনার পেমেন্ট তথ্য সফলভাবে জমা নেওয়া হয়েছে!**\n\n"
             "⏳ *এজেন্ট টিম ভেরিফাই করে দ্রুততম সময়ে নিশ্চিত করবে।*",
@@ -196,8 +308,12 @@ if __name__ == '__main__':
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("admin", admin_panel))
+    app.add_handler(CommandHandler("broadcast", broadcast_command))
+    app.add_handler(CommandHandler("stats", stats_command))
+    
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
-    print("Ultra Premium Animated Bot is running...")
+    print("Bot with Admin Panel & Broadcast System is running...")
     app.run_polling()
