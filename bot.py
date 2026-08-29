@@ -1,39 +1,62 @@
 import logging
+import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.constants import ChatAction
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler, MessageHandler, filters
 
 # ==================== কনফিগারেশন ====================
 BOT_TOKEN = "8887502071:AAE20aePqQgR8FdQ8HqgNH2RHfXaY7SM0Ho"
 ADMIN_ID = 6776006196
-PAYMENT_NUMBER = "01870156643"  # বিকাশ / নগদ নম্বর
-SUPPORT_USERNAME = "Minaradmin"  # সাপোর্ট ইউজারনেম
+PAYMENT_NUMBER = "01870156643"  # bKash / Nagad Number
+SUPPORT_USERNAME = "Minaradmin"  # Support Username
+
+# প্রিমিয়াম অ্যানিমেটেড জিআইএফ ব্যানার লিংক (পেমেন্ট ও ভেরিফিকেশন থিম)
+ANIMATED_BANNER_URL = "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3h2aTNld2N5OHAzcnRsbWVhdjFwdmdwNDNldzZ3d2R6bWZ4czE3biZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oKIPnAiaMCws8nOsE/giphy.gif"
 # ====================================================
 
-# /start কমান্ড হ্যান্ডলার
+# /start কমান্ড হ্যান্ডলার (অ্যানিমেশন সহ)
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
-    user_id = user.id
+    chat_id = update.effective_chat.id
+
+    # টাইপিং অ্যানিমেশন এফেক্ট
+    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+    await asyncio.sleep(0.5)
     
     msg = (
-        f"💎 **— OFFICIAL PAYMENT PORTAL —**\n"
+        f"✨ **— OFFICIAL VIP PAYMENT PORTAL —** ✨\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━\n"
         f"👤 **গ্রাহক:** {user.full_name}\n"
-        f"🆔 **ইউজার আইডি:** `{user_id}`\n"
+        f"🆔 **আইডি:** `{user.id}`\n"
+        f"⚡ **সিস্টেম স্ট্যাটাস:** 🟢 24/7 Active\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"📲 **পেমেন্ট সম্পূর্ণ করতে বা তথ্য জমা দিতে নিচের বাটনে ক্লিক করুন।**"
+        f"📲 *পেমেন্ট করতে বা লেনদেনের তথ্য পাঠাতে নিচের বাটনে চাপ দিন।* 👋"
     )
     
     keyboard = [
         [InlineKeyboardButton("💳 Make Payment / Send TrxID", callback_data="req_pay")],
         [
-            InlineKeyboardButton("📞 Help & Support", url=f"https://t.me/{SUPPORT_USERNAME}"),
-            InlineKeyboardButton("🔄 Refresh Portal", callback_data="refresh")
+            InlineKeyboardButton("💬 Help & Support", url=f"https://t.me/{SUPPORT_USERNAME}"),
+            InlineKeyboardButton("🔄 Live Refresh", callback_data="refresh")
         ]
     ]
     
-    await update.message.reply_text(msg, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+    # অ্যানিমেটেড ব্যানার পাঠাবে
+    try:
+        await update.message.reply_animation(
+            animation=ANIMATED_BANNER_URL,
+            caption=msg,
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode="Markdown"
+        )
+    except Exception:
+        await update.message.reply_text(
+            text=msg,
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode="Markdown"
+        )
 
-# বাটন ক্লিক হ্যান্ডলার
+# বাটন ক্লিক হ্যান্ডলার (স্মুথ এডিটিং ও লোডিং অ্যানিমেশন সহ)
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -41,56 +64,72 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query.data == "req_pay":
         context.user_data['waiting_for_trx'] = True
         
+        # ১. লাইভ লোডিং অ্যানিমেশন ট্রানজিশন
+        loading_frames = [
+            "⏳ *পেমেন্ট পোর্টাল লোড হচ্ছে...*\n`[▒▒▒▒▒▒▒▒▒▒] 0%`",
+            "⚡ *পেমেন্ট নির্দেশিকা তৈরি হচ্ছে...*\n`[█████▒▒▒▒▒] 50%`",
+            "✨ *পোর্টাল রেডি!*\n`[██████████] 100%`"
+        ]
+        
+        for frame in loading_frames:
+            try:
+                await query.edit_message_caption(caption=frame, parse_mode="Markdown")
+                await asyncio.sleep(0.2)
+            except Exception:
+                pass
+        
         pay_instruction = (
-            f"📥 **— PAYMENT INSTRUCTIONS —**\n"
+            f"📥 **— INLINE PAYMENT INSTRUCTIONS —**\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"🔹 **পেমেন্ট মেথড:** bKash / Nagad (Personal)\n"
+            f"💎 **পেমেন্ট মেথড:** bKash / Nagad (Personal)\n"
             f"📱 **এজেন্ট/ব্যক্তিগত নম্বর:** `{PAYMENT_NUMBER}`\n"
-            f"📌 **টাইপ:** Send Money\n"
+            f"🚀 **টাইপ:** Send Money\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━\n"
             f"📝 **কিভাবে জমা দিবেন:**\n"
             f"উপরে দেওয়া নম্বরে পেমেন্ট সম্পূর্ণ করে আপনার **মোবাইল নম্বর** এবং **TrxID** বা টাকার পরিমাণ এক মেসেজে লিখে পাঠান।\n\n"
             f"💡 *উদাহরণ:* `01711223344 TrxID: A1B2C3D4 Amount: 500`"
         )
         
-        keyboard = [[InlineKeyboardButton("🔙 Back to Menu", callback_data="back_home")]]
-        await query.edit_message_text(pay_instruction, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+        keyboard = [[InlineKeyboardButton("🔙 Back to Main Menu", callback_data="back_home")]]
+        await query.edit_message_caption(caption=pay_instruction, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
 
     elif query.data == "back_home":
         user = query.from_user
-        user_id = user.id
         
         msg = (
-            f"💎 **— OFFICIAL PAYMENT PORTAL —**\n"
+            f"✨ **— OFFICIAL VIP PAYMENT PORTAL —** ✨\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━\n"
             f"👤 **গ্রাহক:** {user.full_name}\n"
-            f"🆔 **ইউজার আইডি:** `{user_id}`\n"
+            f"🆔 **আইডি:** `{user.id}`\n"
+            f"⚡ **সিস্টেম স্ট্যাটাস:** 🟢 24/7 Active\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"📲 **পেমেন্ট সম্পূর্ণ করতে বা তথ্য জমা দিতে নিচের বাটনে ক্লিক করুন।**"
+            f"📲 *পেমেন্ট করতে বা লেনদেনের তথ্য পাঠাতে নিচের বাটনে চাপ দিন।*"
         )
         
         keyboard = [
             [InlineKeyboardButton("💳 Make Payment / Send TrxID", callback_data="req_pay")],
             [
-                InlineKeyboardButton("📞 Help & Support", url=f"https://t.me/{SUPPORT_USERNAME}"),
-                InlineKeyboardButton("🔄 Refresh Portal", callback_data="refresh")
+                InlineKeyboardButton("💬 Help & Support", url=f"https://t.me/{SUPPORT_USERNAME}"),
+                InlineKeyboardButton("🔄 Live Refresh", callback_data="refresh")
             ]
         ]
-        await query.edit_message_text(msg, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+        await query.edit_message_caption(caption=msg, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
 
     elif query.data == "refresh":
-        await query.answer("পোর্টাল রিফ্রেশ করা হয়েছে!", show_alert=True)
+        # রিফ্রেশ বাটনে অ্যানিমেটেড টোস্ট নোটিফিকেশন
+        await query.answer("✨ পোর্টাল তথ্য রিয়েল-টাইমে আপডেট করা হয়েছে!", show_alert=True)
 
     elif query.data.startswith("approve_"):
         user_id = int(query.data.split("_")[1])
         
+        # ইউজারকে প্রিমিয়াম অ্যানিমেটেড নোটিফিকেশন পাঠানো
         await context.bot.send_message(
             chat_id=user_id, 
             text=(
-                f"✅ **PAYMENT RECEIVED & CONFIRMED!**\n"
+                f"🎉 **PAYMENT APPROVED & CONFIRMED!** 🟢\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"আপনার পেমেন্ট সফলভাবে গ্রহণ ও অনুমোদন করা হয়েছে।\n\n"
-                f"ধন্যবাদ আমাদের সেবা গ্রহণ করার জন্য! 🤝"
+                f"✨ আপনার পেমেন্ট সফলভাবে যাচাই করে ভেরিফাই করা হয়েছে।\n\n"
+                f"🤝 আমাদের সাথে থাকার জন্য ধন্যবাদ!"
             ),
             parse_mode="Markdown"
         )
@@ -101,23 +140,30 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(
             chat_id=user_id, 
             text=(
-                f"❌ **PAYMENT VERIFICATION FAILED!**\n"
+                f"❌ **PAYMENT VERIFICATION FAILED!** 🔴\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"আপনার প্রদানকৃত TrxID বা পেমেন্ট তথ্যটি মেলেনি।\n"
-                f"অনুগ্রহ করে সঠিক তথ্য দিয়ে পুনরায় চেষ্টা করুন অথবা সাপোর্টে যোগাযোগ করুন।"
+                f"আপনার প্রদানকৃত TrxID বা পেমেন্ট তথ্যটি পাওয়া যায়নি।\n"
+                f"অনুগ্রহ করে সঠিক তথ্য দিয়ে আবার চেষ্টা করুন অথবা সাপোর্টে বার্তা দিন।"
             ),
             parse_mode="Markdown"
         )
         await query.edit_message_text(f"❌ Payment Rejected for User ID: {user_id}")
 
-# ইউজারের ট্রানজেকশন তথ্য রিসিভ করা
+# ইউজারের ট্রানজেকশন তথ্য সাবমিট করা (অ্যানিমেটেড প্রসেস)
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     text = update.message.text
+    chat_id = update.effective_chat.id
 
     if context.user_data.get('waiting_for_trx'):
         context.user_data['waiting_for_trx'] = False
         
+        # প্রসেসিং মেসেজ ও টাইপিং অ্যাকশন
+        await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+        status_msg = await update.message.reply_text("⏳ *ভেরিফিকেশনের জন্য সার্ভারে ডেটা প্রসেস হচ্ছে...*", parse_mode="Markdown")
+        await asyncio.sleep(1.2)
+        
+        # অ্যাডমিনের কাছে অ্যালার্ট পাঠানো
         admin_keyboard = [
             [
                 InlineKeyboardButton("✅ Confirm Payment", callback_data=f"approve_{user.id}"),
@@ -128,19 +174,21 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(
             chat_id=ADMIN_ID,
             text=(
-                f"🔔 **NEW PAYMENT SUBMISSION**\n"
+                f"🚨 **NEW PAYMENT SUBMISSION** 🚨\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━\n"
                 f"👤 **গ্রাহক:** {user.full_name} (@{user.username})\n"
                 f"🆔 **ID:** `{user.id}`\n"
-                f"📄 **পেমেন্ট তথ্য:** `{text}`\n"
+                f"📄 **পেমেন্ট ডেটা:** `{text}`\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━"
             ),
             reply_markup=InlineKeyboardMarkup(admin_keyboard),
             parse_mode="Markdown"
         )
         
-        await update.message.reply_text(
-            "⏳ **আপনার পেমেন্ট তথ্য জমা নেওয়া হয়েছে!**\nএজেন্ট ভেরিফাই করে খুব দ্রুত পেমেন্ট কনফার্ম করে দিবে।",
+        # কনফার্মেশন অ্যানিমেটেড মেসেজ
+        await status_msg.edit_text(
+            "🚀 **আপনার পেমেন্ট তথ্য সফলভাবে জমা নেওয়া হয়েছে!**\n\n"
+            "⏳ *এজেন্ট টিম ভেরিফাই করে দ্রুততম সময়ে নিশ্চিত করবে।*",
             parse_mode="Markdown"
         )
 
@@ -151,68 +199,5 @@ if __name__ == '__main__':
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
-    print("Payment Portal Bot is running...")
-    app.run_polling()                f"🗓️ **নতুন মেয়াদ:** `{new_expiry.strftime('%d %b, %Y')}` (৩০ দিন)\n\n"
-                f"আমাদের সাথে থাকার জন্য ধন্যবাদ! 🤝"
-            ),
-            parse_mode="Markdown"
-        )
-        await query.edit_message_text(f"✅ Approved User ID: {user_id}")
-
-    elif query.data.startswith("reject_"):
-        user_id = int(query.data.split("_")[1])
-        await context.bot.send_message(
-            chat_id=user_id, 
-            text=(
-                f"❌ **PAYMENT REJECTED!**\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"আপনার প্রদানকৃত TrxID বা তথ্যটি সঠিক নয়।\n"
-                f"অনুগ্রহ করে সঠিক তথ্য দিয়ে পুনরায় চেষ্টা করুন অথবা সাপোর্টে যোগাযোগ করুন।"
-            ),
-            parse_mode="Markdown"
-        )
-        await query.edit_message_text(f"❌ Rejected User ID: {user_id}")
-
-# ইউজারের ট্রানজেকশন তথ্য রিসিভ করা
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.message.from_user
-    text = update.message.text
-
-    if context.user_data.get('waiting_for_trx'):
-        context.user_data['waiting_for_trx'] = False
-        
-        admin_keyboard = [
-            [
-                InlineKeyboardButton("✅ Approve (30 Days)", callback_data=f"approve_{user.id}"),
-                InlineKeyboardButton("❌ Reject", callback_data=f"reject_{user.id}")
-            ]
-        ]
-        
-        await context.bot.send_message(
-            chat_id=ADMIN_ID,
-            text=(
-                f"🔔 **NEW PAYMENT REQUEST**\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"👤 **ইউজার:** {user.full_name} (@{user.username})\n"
-                f"🆔 **ID:** `{user.id}`\n"
-                f"📄 **তথ্য:** `{text}`\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━━"
-            ),
-            reply_markup=InlineKeyboardMarkup(admin_keyboard),
-            parse_mode="Markdown"
-        )
-        
-        await update.message.reply_text(
-            "⏳ **আপনার পেমেন্ট তথ্য জমা নেওয়া হয়েছে!**\nঅ্যাডমিন ভেরিফাই করে দ্রুততম সময়ের মধ্যে আপনার সার্ভিস রিনিউ করে দিবে।",
-            parse_mode="Markdown"
-        )
-
-if __name__ == '__main__':
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-    
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(button_handler))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    
-    print("Bot is running with updated Admin Config...")
+    print("Ultra Premium Animated Bot is running...")
     app.run_polling()
