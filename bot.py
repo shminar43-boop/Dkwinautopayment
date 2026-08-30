@@ -40,15 +40,15 @@ def save_user(user):
 # Telegram Bot Auto Command Menu Setup
 async def post_init(application):
     await application.bot.set_my_commands([
-        BotCommand("start", "Start payment bot & main menu"),
-        BotCommand("admin", "Open Admin Control Panel"),
-        BotCommand("users", "Show registered user list"),
-        BotCommand("broadcast", "Send message to all users"),
-        BotCommand("send", "Send message to single user"),
-        BotCommand("stats", "Show user statistics")
+        BotCommand("start", "🏠 মূল মেনু খুলুন"),
+        BotCommand("admin", "⚙️ এডমিন প্যানেল"),
+        BotCommand("users", "👥 কাস্টমার লিস্ট"),
+        BotCommand("broadcast", "📢 ব্রডকাস্ট মেসেজ"),
+        BotCommand("send", "✉️ ডাইরেক্ট মেসেজ"),
+        BotCommand("stats", "📊 পরিসংখ্যান")
     ])
 
-# /start Command Handler
+# /start Command Handler (Professional UI)
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
     chat_id = update.effective_chat.id
@@ -56,23 +56,26 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     save_user(user)
 
     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-    await asyncio.sleep(0.3)
+    await asyncio.sleep(0.2)
     
     msg = (
-        f"✨ **— OFFICIAL VIP PAYMENT PORTAL —** ✨\n"
+        f"┌───────────────┐\n"
+        f"  💎 **VIP AUTO PAYMENT PORTAL** 💎\n"
+        f"└───────────────┘\n\n"
+        f"👤 **গ্রাহকের তথ্য:**\n"
+        f" ┣ 📛 **নাম:** `{user.full_name}`\n"
+        f" ┣ 🆔 **আইডি:** `{user.id}`\n"
+        f" ┗ ⚡ **সার্ভার স্ট্যাটাস:** 🟢 `২৪/৭ অনলাইন`\n\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"👤 **Grahok:** {user.full_name}\n"
-        f"🆔 **ID:** `{user.id}`\n"
-        f"⚡ **Status:** 🟢 24/7 Active\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"📲 *Payment korte ba TrxID pathate nicher botone chap din.* 👋"
+        f"📢 **বিজ্ঞপ্তি:** আপনার যেকোনো সার্ভিস রিনিউ বা সাবস্ক্রিপশনের জন্য নিচের বাটন থেকে লেনদেন সম্পন্ন করুন।\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━"
     )
     
     keyboard = [
-        [InlineKeyboardButton("💳 Make Payment / Send TrxID", callback_data="req_pay")],
+        [InlineKeyboardButton("💳 পেমেন্ট করুন / TrxID জমা দিন", callback_data="req_pay")],
         [
-            InlineKeyboardButton("💬 Help & Support", url=f"https://t.me/{SUPPORT_USERNAME}"),
-            InlineKeyboardButton("🔄 Live Refresh", callback_data="refresh")
+            InlineKeyboardButton("👨‍💻 লাইভ সাপোর্ট", url=f"https://t.me/{SUPPORT_USERNAME}"),
+            InlineKeyboardButton("🔄 পেজ রিফ্রেশ", callback_data="refresh")
         ]
     ]
     
@@ -94,34 +97,33 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id != ADMIN_ID:
-        await update.message.reply_text("⛔ Ei command shudhu admin bebohar korte parben.")
+        await update.message.reply_text("⛔ **অ্যাক্সেস সংরক্ষিত:** এই কমান্ডটি শুধুমাত্র এডমিনের জন্য।")
         return
 
     users = load_users()
     msg = (
-        f"👑 **— ADMIN CONTROL PANEL —**\n"
+        f"⚡ **ADMIN DASHBOARD** ⚡\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"📊 **Total Registered Users:** `{len(users)}` jon\n"
-        f"⚡ **Bot Status:** 🟢 Online & Running\n"
+        f"📈 **মোট কাস্টমার:** `{len(users)}` জন\n"
+        f"🟢 **বট সিস্টেম:** `স্বাভাবিক`\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"⚡ **QUICK COMMANDS (Tap to use):**\n"
-        f"• /users - Registered user list\n"
-        f"• /stats - User count summary\n"
-        f"• /broadcast - Send message to all users\n"
-        f"• /send - Send message to a specific user\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"💡 *Nicher buton gulo babohar kore dynamic action nin:* "
+        f"🛠 **দ্রুত অ্যাকশন কমান্ড:**\n"
+        f"┣ `/users` ➔ কাস্টমার লিস্ট দেখুন\n"
+        f"┣ `/stats` ➔ ইউজার পরিসংখ্যান\n"
+        f"┣ `/broadcast` ➔ সবাইকে মেসেজ পাঠান\n"
+        f"┗ `/send` ➔ একজনকে মেসেজ পাঠান\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━"
     )
     
     keyboard = [
-        [InlineKeyboardButton("📋 Registered User List", callback_data="admin_user_list")],
+        [InlineKeyboardButton("📋 কাস্টমার তালিকা", callback_data="admin_user_list")],
         [
-            InlineKeyboardButton("📢 Broadcast Guide", callback_data="guide_broadcast"),
-            InlineKeyboardButton("👤 Single Send Guide", callback_data="guide_send")
+            InlineKeyboardButton("📢 ব্রডকাস্ট হেল্প", callback_data="guide_broadcast"),
+            InlineKeyboardButton("✉️ ডাইরেক্ট মেসেজ হেল্প", callback_data="guide_send")
         ],
         [
-            InlineKeyboardButton("📊 Total Stats", callback_data="admin_stats"),
-            InlineKeyboardButton("🔄 Refresh Panel", callback_data="admin_refresh")
+            InlineKeyboardButton("📊 লাইভ স্ট্যাটস", callback_data="admin_stats"),
+            InlineKeyboardButton("🔄 রিফ্রেশ", callback_data="admin_refresh")
         ]
     ]
     
@@ -131,27 +133,24 @@ async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def list_users_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id != ADMIN_ID:
-        await update.message.reply_text("⛔ Ei command shudhu admin bebohar korte parben.")
+        await update.message.reply_text("⛔ এই কমান্ডটি শুধুমাত্র এডমিনের জন্য।")
         return
 
     users = load_users()
     if not users:
-        await update.message.reply_text("❌ Kono user record-e paowa jayni.")
+        await update.message.reply_text("❌ কোনো কাস্টমারের তথ্য পাওয়া যায়নি।")
         return
 
-    user_list_text = f"📋 **— ALL REGISTERED USERS ({len(users)}) —**\n━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+    user_list_text = f"👥 **কাস্টমার তালিকা ({len(users)} জন):**\n━━━━━━━━━━━━━━━━━━━━━━━\n\n"
     count = 1
     for uid, udata in users.items():
         name = udata.get("name", "Unknown")
         uname = udata.get("username", "No Username")
         user_list_text += (
-            f"{count}. 👤 **{name}** ({uname})\n"
-            f"   🆔 ID: `{uid}`\n"
-            f"   👉 Send Msg: `/send {uid} `\n\n"
+            f"`{count}.` 👤 **{name}** ({uname})\n"
+            f"   ┗ 🆔 `{uid}` ➔ Send: `/send {uid} `\n\n"
         )
         count += 1
-
-    user_list_text += "━━━━━━━━━━━━━━━━━━━━━━━\n💡 *Single user ke message dite click tap `/send <id> <msg>`*"
 
     if len(user_list_text) > 4000:
         for x in range(0, len(user_list_text), 4000):
@@ -163,15 +162,15 @@ async def list_users_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def send_single_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id != ADMIN_ID:
-        await update.message.reply_text("⛔ Ei command shudhu admin bebohar korte parben.")
+        await update.message.reply_text("⛔ এই কমান্ডটি শুধুমাত্র এডমিনের জন্য।")
         return
 
     if len(context.args) < 2:
         await update.message.reply_text(
-            "⚠️ **Beboharer Niyom:**\n\n"
-            "`/send <user_id> <apnar_message>`\n\n"
-            "💡 *Tap to copy example:*\n"
-            "`/send 7433409654 Apnar payment verified!`",
+            "⚠️ **ব্যবহারের নিয়ম:**\n\n"
+            "`/send <user_id> <মেসেজ>`\n\n"
+            "💡 **উদাহরণ:**\n"
+            "`/send 7433409654 আপনার পেমেন্ট ভেরিফাইড হয়েছে!`",
             parse_mode="Markdown"
         )
         return
@@ -183,23 +182,23 @@ async def send_single_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(
             chat_id=int(target_user_id),
             text=(
-                f"📩 **— NOTICE FROM ADMIN —**\n"
+                f"📩 **অফিশিয়াল এডমিন বার্তা**\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━\n\n"
                 f"{message_text}\n\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"📞 Support: @{SUPPORT_USERNAME}"
+                f"👨‍💻 হেল্পলাইন: @{SUPPORT_USERNAME}"
             ),
             parse_mode="Markdown"
         )
         await update.message.reply_text(
-            f"✅ **Message pathano hoyeche!**\n\n"
-            f"👤 **User ID:** `{target_user_id}`\n"
-            f"📄 **Message:** {message_text}",
+            f"✅ **মেসেজ সফলভাবে পাঠানো হয়েছে!**\n\n"
+            f"👤 **প্রাপক আইডি:** `{target_user_id}`\n"
+            f"💬 **মেসেজ:** {message_text}",
             parse_mode="Markdown"
         )
     except Exception as e:
         await update.message.reply_text(
-            f"❌ **Error:** Message pathano jayni. User bot block korethakte pare.\nDetails: `{e}`",
+            f"❌ **এরর:** মেসেজ পাঠানো সম্ভব হয়নি। (ইউজার বট ব্লক করে থাকতে পারে)\n`{e}`",
             parse_mode="Markdown"
         )
 
@@ -207,28 +206,28 @@ async def send_single_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id != ADMIN_ID:
-        await update.message.reply_text("⛔ Ei command shudhu admin bebohar korte parben.")
+        await update.message.reply_text("⛔ এই কমান্ডটি শুধুমাত্র এডমিনের জন্য।")
         return
 
     if not context.args and not update.message.reply_to_message:
         await update.message.reply_text(
-            "⚠️ **Beboharer Niyom:**\n\n"
-            "`/broadcast Apnar notice`\n\n"
-            "💡 *Tap to copy example:*\n"
-            "`/broadcast Ajke sob transaction veti-krito hoyeche!`",
+            "⚠️ **ব্যবহারের নিয়ম:**\n\n"
+            "`/broadcast <মেসেজ>`\n\n"
+            "💡 **উদাহরণ:**\n"
+            "`/broadcast আজকের অফার চালু হয়েছে!`",
             parse_mode="Markdown"
         )
         return
 
     users = load_users()
     if not users:
-        await update.message.reply_text("❌ Kono user paowa jayni.")
+        await update.message.reply_text("❌ কোনো কাস্টমার পাওয়া যায়নি।")
         return
 
     broadcast_text = " ".join(context.args) if context.args else None
     reply_to_msg = update.message.reply_to_message
 
-    status_msg = await update.message.reply_text(f"⏳ **{len(users)} jon user er kache message pathano shuru hocche...**", parse_mode="Markdown")
+    status_msg = await update.message.reply_text(f"⏳ **{len(users)} জন ইউজারের কাছে মেসেজ পাঠানো শুরু হচ্ছে...**", parse_mode="Markdown")
     
     success_count = 0
     failed_count = 0
@@ -240,7 +239,7 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 await context.bot.send_message(
                     chat_id=int(uid),
-                    text=f"📢 **— ANNOUNCEMENT —**\n━━━━━━━━━━━━━━━━━━━━━━━\n\n{broadcast_text}",
+                    text=f"📢 **বিশেষ বিজ্ঞপ্তি**\n━━━━━━━━━━━━━━━━━━━━━━━\n\n{broadcast_text}",
                     parse_mode="Markdown"
                 )
             success_count += 1
@@ -249,11 +248,11 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             failed_count += 1
 
     await status_msg.edit_text(
-        f"✅ **BROADCAST COMPLETED!**\n"
+        f"✅ **ব্রডকাস্ট সম্পন্ন হয়েছে!**\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"🟢 **Sotikbhabe Giyeshe:** `{success_count}` jon\n"
-        f"🔴 **Failed (Block):** `{failed_count}` jon\n"
-        f"📊 **Total Users:** `{len(users)}` jon",
+        f"🟢 **সফল:** `{success_count}` জন\n"
+        f"🔴 **ব্যর্থ:** `{failed_count}` জন\n"
+        f"📊 **মোট কাস্টমার:** `{len(users)}` জন",
         parse_mode="Markdown"
     )
 
@@ -262,9 +261,9 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_ID:
         return
     users = load_users()
-    await update.message.reply_text(f"📊 **Total Registered Users:** `{len(users)}` jon", parse_mode="Markdown")
+    await update.message.reply_text(f"📊 **মোট রেজিস্টার্ড কাস্টমার:** `{len(users)}` জন", parse_mode="Markdown")
 
-# Button Click Handler
+# Button Click Handler (Animated & Dynamic UI)
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -273,73 +272,75 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data['waiting_for_trx'] = True
         
         loading_frames = [
-            "⏳ *Payment portal load hocche...*\n`[▒▒▒▒▒▒▒▒▒▒] 0%`",
-            "⚡ *Payment nirdeshika toiri hocche...*\n`[█████▒▒▒▒▒] 50%`",
-            "✨ *Portal Ready!*\n`[██████████] 100%`"
+            "⏳ *পেমেন্ট গেটওয়ে লোড হচ্ছে...*\n`[■□□□□□□□□□] 10%`",
+            "⚡ *নিরাপদ কানেকশন তৈরি হচ্ছে...*\n`[█████□□□□□] 50%`",
+            "✨ *প্রসেসিং সম্পন্ন!*\n`[██████████] 100%`"
         ]
         
         for frame in loading_frames:
             try:
                 await query.edit_message_caption(caption=frame, parse_mode="Markdown")
-                await asyncio.sleep(0.12)
+                await asyncio.sleep(0.1)
             except Exception:
                 pass
         
         pay_instruction = (
-            f"📥 **— INLINE PAYMENT INSTRUCTIONS —**\n"
+            f"💳 **পেমেন্ট নির্দেশিকা**\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"💎 **Payment Method:** bKash / Nagad (Personal)\n"
-            f"📱 **Agent / Personal Number:** `{PAYMENT_NUMBER}`\n"
-            f"🚀 **Type:** Send Money\n"
+            f"🔹 **পেমেন্ট মেথড:** bKash / Nagad (Personal)\n"
+            f"📱 **নম্বর:** `{PAYMENT_NUMBER}`\n"
+            f"⚡ **টাইপ:** Send Money\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"📝 **Kivabe joma diben:**\n"
-            f"Upore dewa number e payment shomponno kore apnar **mobile number** ebong **TrxID** ba takar poriman ek message e likhe pathan.\n\n"
-            f"💡 *Udaharun:* `01711223344 TrxID: A1B2C3D4 Amount: 500`"
+            f"📝 **জমা দেওয়ার নিয়ম:**\n"
+            f"উপরে দেওয়া নম্বরে টাকা পাঠিয়ে আপনার **মোবাইল নম্বর** এবং **TrxID** বা টাকার পরিমাণ এক মেসেজে লিখে রিপ্লাই দিন।\n\n"
+            f"💡 **উদাহরণ:**\n`01711223344 TrxID: A1B2C3D4 Amount: 500`"
         )
         
-        keyboard = [[InlineKeyboardButton("🔙 Back to Main Menu", callback_data="back_home")]]
+        keyboard = [[InlineKeyboardButton("🔙 মূল মেনুতে ফিরুন", callback_data="back_home")]]
         await query.edit_message_caption(caption=pay_instruction, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
 
     elif query.data == "back_home":
         user = query.from_user
         
         msg = (
-            f"✨ **— OFFICIAL VIP PAYMENT PORTAL —** ✨\n"
+            f"┌───────────────┐\n"
+            f"  💎 **VIP AUTO PAYMENT PORTAL** 💎\n"
+            f"└───────────────┘\n\n"
+            f"👤 **গ্রাহকের তথ্য:**\n"
+            f" ┣ 📛 **নাম:** `{user.full_name}`\n"
+            f" ┣ 🆔 **আইডি:** `{user.id}`\n"
+            f" ┗ ⚡ **সার্ভার স্ট্যাটাস:** 🟢 `২৪/৭ অনলাইন`\n\n"
             f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"👤 **Grahok:** {user.full_name}\n"
-            f"🆔 **ID:** `{user.id}`\n"
-            f"⚡ **Status:** 🟢 24/7 Active\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"📲 *Payment korte ba TrxID pathate nicher botone chap din.*"
+            f"📢 **বিজ্ঞপ্তি:** আপনার যেকোনো সার্ভিস রিনিউ বা সাবস্ক্রিপশনের জন্য নিচের বাটন থেকে লেনদেন সম্পন্ন করুন।\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━━"
         )
         
         keyboard = [
-            [InlineKeyboardButton("💳 Make Payment / Send TrxID", callback_data="req_pay")],
+            [InlineKeyboardButton("💳 পেমেন্ট করুন / TrxID জমা দিন", callback_data="req_pay")],
             [
-                InlineKeyboardButton("💬 Help & Support", url=f"https://t.me/{SUPPORT_USERNAME}"),
-                InlineKeyboardButton("🔄 Live Refresh", callback_data="refresh")
+                InlineKeyboardButton("👨‍💻 লাইভ সাপোর্ট", url=f"https://t.me/{SUPPORT_USERNAME}"),
+                InlineKeyboardButton("🔄 পেজ রিফ্রেশ", callback_data="refresh")
             ]
         ]
         await query.edit_message_caption(caption=msg, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
 
     elif query.data == "refresh":
-        await query.answer("✨ Portal update kora hoyeche!", show_alert=True)
+        await query.answer("✨ সিস্টেম রিফ্রেশ সম্পন্ন হয়েছে!", show_alert=True)
 
     elif query.data == "admin_user_list":
         users = load_users()
         if not users:
-            await query.answer("Kono registered user nai", show_alert=True)
+            await query.answer("কোনো কাস্টমারের তথ্য নেই", show_alert=True)
             return
 
-        user_list_text = f"📋 **— ALL REGISTERED USERS ({len(users)}) —**\n━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        user_list_text = f"👥 **কাস্টমার তালিকা ({len(users)} জন):**\n━━━━━━━━━━━━━━━━━━━━━━━\n\n"
         count = 1
         for uid, udata in users.items():
             name = udata.get("name", "Unknown")
             uname = udata.get("username", "No Username")
             user_list_text += (
-                f"{count}. 👤 **{name}** ({uname})\n"
-                f"   🆔 ID: `{uid}`\n"
-                f"   👉 Quick Msg: `/send {uid} `\n\n"
+                f"`{count}.` 👤 **{name}** ({uname})\n"
+                f"   ┗ 🆔 `{uid}` ➔ Send: `/send {uid} `\n\n"
             )
             count += 1
             
@@ -347,38 +348,38 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data == "guide_broadcast":
         guide_text = (
-            "📢 **— BROADCAST GUIDE —**\n"
+            "📢 **ব্রডকাস্ট গাইড**\n"
             "━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "Sob user ke ekshate message dite nicher format e likhun (tap to copy):\n\n"
-            "`/broadcast Ajke amader bot upgrade kora hoyeche!`"
+            "সব ইউজারকে একসাথে মেসেজ পাঠাতে টাইপ করুন:\n\n"
+            "`/broadcast আজ বিশেষ অফার চলছে!`"
         )
         await context.bot.send_message(chat_id=query.from_user.id, text=guide_text, parse_mode="Markdown")
 
     elif query.data == "guide_send":
         guide_text = (
-            "👤 **— SINGLE SEND GUIDE —**\n"
+            "✉️ **ডাইরেক্ট মেসেজ গাইড**\n"
             "━━━━━━━━━━━━━━━━━━━━━━━\n"
-            "Kono nirdishto user ke message dite nicher format e likhun (tap to copy):\n\n"
-            "`/send 7433409654 Apnar payment verification success!`"
+            "একজনকে মেসেজ দিতে টাইপ করুন:\n\n"
+            "`/send 7433409654 আপনার সার্ভিস একটিভ হয়েছে!`"
         )
         await context.bot.send_message(chat_id=query.from_user.id, text=guide_text, parse_mode="Markdown")
 
     elif query.data == "admin_stats":
         users = load_users()
-        await query.answer(f"📊 Total Users: {len(users)} jon", show_alert=True)
+        await query.answer(f"📈 মোট রেজিস্টার্ড কাস্টমার: {len(users)} জন", show_alert=True)
 
     elif query.data == "admin_refresh":
-        await query.answer("Admin Dashboard refreshed!", show_alert=True)
+        await query.answer("ড্যাশবোর্ড রিফ্রেশ করা হয়েছে!", show_alert=True)
 
     elif query.data.startswith("approve_"):
         user_id = int(query.data.split("_")[1])
         await context.bot.send_message(
             chat_id=user_id, 
             text=(
-                f"🎉 **PAYMENT APPROVED & CONFIRMED!** 🟢\n"
+                f"🎉 **পেমেন্ট অনুমোদিত হয়েছে!** 🟢\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"✨ Apnar payment sothikbhabe janchai kore verify kora hoyeche.\n\n"
-                f"🤝 Amader sathe thakar jonno dhonnobad!"
+                f"আপনার লেনদেন সফলভাবে ভেরিফাই করা হয়েছে। আপনার সার্ভিস সক্রিয় করা হলো।\n\n"
+                f"🤝 আমাদের সাথে থাকার জন্য ধন্যবাদ!"
             ),
             parse_mode="Markdown"
         )
@@ -389,10 +390,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(
             chat_id=user_id, 
             text=(
-                f"❌ **PAYMENT VERIFICATION FAILED!** 🔴\n"
+                f"❌ **পেমেন্ট বাতিল হয়েছে!** 🔴\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"Apnar prodattokrito TrxID ba payment tathyo paowa jayni.\n"
-                f"Onugroho kore sothik tathyo diye abar chesta karun ba support e barta din."
+                f"আপনার প্রদত্ত TrxID বা তথ্যে ভুল পাওয়া গেছে।\n"
+                f"অনুগ্রহ করে সঠিকভাবে পেমেন্ট করে আবার চেষ্টা করুন অথবা সাপোর্টে যোগাযোগ করুন।"
             ),
             parse_mode="Markdown"
         )
@@ -410,24 +411,24 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data['waiting_for_trx'] = False
         
         await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-        status_msg = await update.message.reply_text("⏳ *Verification er jonno server e data process hocche...*", parse_mode="Markdown")
-        await asyncio.sleep(1.0)
+        status_msg = await update.message.reply_text("⏳ *আপনার পেমেন্ট তথ্য প্রসেসিং হচ্ছে...*", parse_mode="Markdown")
+        await asyncio.sleep(0.8)
         
         admin_keyboard = [
             [
-                InlineKeyboardButton("✅ Confirm Payment", callback_data=f"approve_{user.id}"),
-                InlineKeyboardButton("❌ Reject Payment", callback_data=f"reject_{user.id}")
+                InlineKeyboardButton("✅ অনুমোদন করুন", callback_data=f"approve_{user.id}"),
+                InlineKeyboardButton("❌ বাতিল করুন", callback_data=f"reject_{user.id}")
             ]
         ]
         
         await context.bot.send_message(
             chat_id=ADMIN_ID,
             text=(
-                f"🚨 **NEW PAYMENT SUBMISSION** 🚨\n"
+                f"🚨 **নতুন পেমেন্ট রিকোয়েস্ট** 🚨\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"👤 **Grahok:** {user.full_name} (@{user.username})\n"
-                f"🆔 **ID:** `{user.id}`\n"
-                f"📄 **Payment Data:** `{text}`\n"
+                f"👤 **কাস্টমার:** {user.full_name} (@{user.username})\n"
+                f"🆔 **আইডি:** `{user.id}`\n"
+                f"📄 **পেমেন্ট তথ্য:** `{text}`\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━"
             ),
             reply_markup=InlineKeyboardMarkup(admin_keyboard),
@@ -435,8 +436,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         
         await status_msg.edit_text(
-            "🚀 **Apnar payment tathyo joma neowa hoyeche!**\n\n"
-            "⏳ *Agent team verify kore druto nishchit korbe.*",
+            "🚀 **আপনার তথ্য জমা নেওয়া হয়েছে!**\n\n"
+            "⏳ *এডমিন প্যানেল থেকে ভেরিফাই করে দ্রুত কনফার্ম করা হবে।*",
             parse_mode="Markdown"
         )
 
@@ -453,5 +454,5 @@ if __name__ == '__main__':
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
-    print("Bot with Auto Command Menu & Admin Panel is running...")
+    print("Professional UI Auto Payment Bot is running...")
     app.run_polling()
