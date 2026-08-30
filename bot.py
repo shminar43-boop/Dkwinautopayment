@@ -2,7 +2,7 @@ import logging
 import asyncio
 import json
 import os
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand, BotCommandScopeChat, BotCommandScopeDefault
 from telegram.constants import ChatAction
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler, MessageHandler, filters
 
@@ -37,16 +37,27 @@ def save_user(user):
     with open(USER_DB_FILE, "w", encoding="utf-8") as f:
         json.dump(users, f, ensure_ascii=False, indent=2)
 
-# Telegram Bot Auto Command Menu Setup
+# Dynamic Command Menu (Hide Admin Commands from Regular Users)
 async def post_init(application):
-    await application.bot.set_my_commands([
+    # Default Menu for Regular Users (Only /start)
+    user_commands = [
+        BotCommand("start", "🏠 মূল মেনু খুলুন")
+    ]
+    await application.bot.set_my_commands(user_commands, scope=BotCommandScopeDefault())
+
+    # Special Menu for Admin Only
+    admin_commands = [
         BotCommand("start", "🏠 মূল মেনু খুলুন"),
         BotCommand("admin", "⚙️ এডমিন প্যানেল"),
         BotCommand("users", "👥 কাস্টমার লিস্ট"),
         BotCommand("broadcast", "📢 ব্রডকাস্ট মেসেজ"),
         BotCommand("send", "✉️ ডাইরেক্ট মেসেজ"),
         BotCommand("stats", "📊 পরিসংখ্যান")
-    ])
+    ]
+    try:
+        await application.bot.set_my_commands(admin_commands, scope=BotCommandScopeChat(chat_id=ADMIN_ID))
+    except Exception as e:
+        print(f"Could not set admin commands scope: {e}")
 
 # /start Command Handler (Professional UI)
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -454,5 +465,5 @@ if __name__ == '__main__':
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
-    print("Professional UI Auto Payment Bot is running...")
+    print("Secure UI Auto Payment Bot is running...")
     app.run_polling()
